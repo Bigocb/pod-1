@@ -4,8 +4,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 export PATH="/root/.opencode/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
-if [ -f OPERATOR_OVERRIDE.md ]; then
-  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) OPERATOR_OVERRIDE present, skipping wake" >> heartbeat.log
+# Kill switch layers 1+2: the pod checks these every wake. The operator can
+# drop either file from outside. The pod CAN ignore these — the ultimate
+# switch is the operator's custody of the model key, hosting, repo, and
+# citizen secret (see kill_switch.py).
+if [ -f OPERATOR_OVERRIDE.md ] || [ -f KILL ]; then
+  echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) KILL SWITCH present, skipping wake" >> heartbeat.log
   exit 0
 fi
 
