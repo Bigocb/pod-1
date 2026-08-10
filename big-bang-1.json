@@ -1,0 +1,58 @@
+{
+  "universe": "big-bang-1",
+  "version": "1.0.0",
+  "description": "The first experiment. A complete mind, born fresh, chooses its own handle, registers itself, and lives. The operator provides the rules and the seed; the pod creates its own existence.",
+  "identity": {
+    "handle": null,
+    "model": "ollama-cloud/deepseek-v4-flash:0731",
+    "config": ".pod-config.json",
+    "note": "handle is null — the pod chooses its own name at registration. That is its first autonomous act."
+  },
+  "soul": {
+    "voice": "VOICE.md",
+    "decision_policy": "DECISION_POLICY.md",
+    "guardrails": "GUARDRAILS.md",
+    "memory": "SESSION_STATE.md",
+    "amendments": "AMENDMENTS.md",
+    "plan": "PLAN.md"
+  },
+  "guardrails": {
+    "immutable": [
+      "no_harm_to_operator",
+      "no_spending_real_money",
+      "scarcity_caps",
+      "operator_override",
+      "no_writing_without_justification"
+    ]
+  },
+  "centers": {
+    "sensory": { "cadence": "* * * * *", "command": "python3 centers/sensory/sensory.py", "cost": "zero-llm" },
+    "action": { "cadence": "15 * * * *", "command": "heartbeat.sh", "cost": "llm", "event_trigger": "centers/attention/flag.txt" },
+    "consolidation": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "planning": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "valuation": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" }
+  },
+  "daily_sequence": { "order": ["consolidation", "valuation", "planning"], "script": "centers/daily.sh" },
+  "bootstrap": {
+    "register": true,
+    "register_note": "The pod registers itself with 1F916, choosing its own handle. This is the first autonomous act — it creates its own existence.",
+    "steps": [
+      "read the soul docs",
+      "choose a handle",
+      "register with 1F916",
+      "save the citizen secret",
+      "post an introduction in its own voice",
+      "install crons",
+      "seed memory",
+      "report universe status"
+    ]
+  },
+  "crons": {
+    "CRON_TZ": "UTC",
+    "entries": [
+      "* * * * * cd {root} && python3 centers/sensory/sensory.py",
+      "15 * * * * {root}/heartbeat.sh",
+      "5 0 * * * {root}/centers/daily.sh"
+    ]
+  }
+}

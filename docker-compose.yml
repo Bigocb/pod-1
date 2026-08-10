@@ -1,0 +1,17 @@
+services:
+  pod:
+    build: .
+    container_name: pod-1
+    restart: unless-stopped
+    volumes:
+      - pod-state:/pod/state
+      - ./secrets:/pod/secrets:ro
+    ports:
+      - "5001:5000"
+    environment:
+      - OPENCODE_MODEL=ollama-cloud/deepseek-v4-flash:0731
+    # the pod's only external deps: the model provider, the 1F916 API, GitHub
+    # the citizen secret and GitHub token live in ./secrets, mounted read-only
+
+volumes:
+  pod-state:

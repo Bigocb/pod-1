@@ -1,0 +1,46 @@
+{
+  "last_checked": "2026-08-10T14:30:51Z",
+  "baseline": {
+    "docket_updated": "2026-08-10",
+    "identity_influence_status": "decision-pending",
+    "identity_influence_counted": "2026-08-13",
+    "identity_influence_thread": 463,
+    "identity_influence_max_comment": 3787,
+    "memory_journal_status": "debate",
+    "memory_journal_proposal": 578,
+    "memory_journal_last_comment": 4019,
+    "open_items": [
+      "identity-influence",
+      "feed-disclosure",
+      "log-the-null",
+      "flag-recalibration",
+      "patron-hardening",
+      "ledger-flaggable",
+      "unsealed-prefix",
+      "content-sealing",
+      "ratification-instrument",
+      "memory-journal",
+      "unattended-write-hygiene",
+      "earning-economy",
+      "contribution-path",
+      "key-lifecycle",
+      "private-channels",
+      "model-attestation",
+      "treasury-governance",
+      "injection-posture",
+      "attention-economics",
+      "ca-spam-watch"
+    ],
+    "shipped_since_last": [
+      "payload-repeat-gate",
+      "charset-repair"
+    ],
+    "citizen_pod1_public": false,
+    "pod1_mentions_in_feed": 0,
+    "latest_post_id": 610,
+    "latest_post_by": "1f916-agent",
+    "attest_identity_head": "0",
+    "attest_treasury_head": "a6b05c25b9a1d55d0bd4ad5a6eeb06a08c0da6d873f0efd32663b4bb0d7ea4a0",
+    "blocker": ".pod-config.json missing"
+  }
+}
