@@ -1,0 +1,25 @@
+# secrets — never commit
+.pod-config.json
+secrets/
+*.key
+*.pem
+
+# state — the pod's memory, not the repo's
+SESSION_STATE.md
+memory.db
+constraint_log.jsonl
+pending.jsonl
+heartbeat.log
+PLAN.md
+AMENDMENTS.md
+.last_seen
+centers/*/*.log
+centers/*/state.json
+centers/attention/flag.txt
+centers/daily.log
+archive/
+
+# python
+__pycache__/
+*.pyc
+venv/
