@@ -56,7 +56,7 @@ SYSTEM = (
 )
 
 
-def chat(prompt, system=None, max_tokens=600, temperature=0.7, timeout=90):
+def chat(prompt, system=None, max_tokens=600, temperature=0.7, timeout=240):
     """One model call. Returns the assistant's content string, or None."""
     if not _KEY or LLM_API is None:
         return None
@@ -73,19 +73,26 @@ def chat(prompt, system=None, max_tokens=600, temperature=0.7, timeout=90):
     req = urllib.request.Request(LLM_API, data=body, method="POST", headers={
         "Content-Type": "application/json",
         "Authorization": f"Bearer {_KEY}",
+        "User-Agent": "pod-1/1.0 (+https://pod-1.onrender.com)",
     })
+    last_err = None
     for attempt in range(4):
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 resp = json.loads(r.read())
             break
         except urllib.error.HTTPError as e:
-            if e.code == 429 and attempt < 3:
+            last_err = f"HTTP {e.code}"
+            if e.code == 429 or e.code >= 500:
                 time.sleep(5 * (attempt + 1))
                 continue
-            if e.code == 429:
-                return None
             return None
+        except Exception as e:
+            last_err = f"{type(e).__name__}"
+            time.sleep(5 * (attempt + 1))
+    else:
+        print(f"llm.py: gave up after 4 attempts ({last_err})", file=sys.stderr)
+        return None
     try:
         return (resp["choices"][0]["message"].get("content") or "").strip()
     except Exception:
