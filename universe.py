@@ -32,11 +32,17 @@ def load_universe(path=None):
         return json.load(f)
 
 
+# The immutable soul — must exist in the repo, never seeded.
+IMMUTABLE_SOUL = ["VOICE.md", "DECISION_POLICY.md", "GUARDRAILS.md"]
+# Runtime state — seeded from seeds/ if missing.
+STATE_FILES = ["SESSION_STATE.md", "AMENDMENTS.md", "PLAN.md"]
+
+
 def verify_soul(u):
     missing = []
-    for name, path in u["soul"].items():
-        if not os.path.exists(os.path.join(ROOT, path)):
-            missing.append(path)
+    for name in IMMUTABLE_SOUL:
+        if not os.path.exists(os.path.join(ROOT, name)):
+            missing.append(name)
     return missing
 
 
@@ -66,9 +72,9 @@ def install_crons(u):
 
 
 def seed_memory(u):
-    """Seed SESSION_STATE.md, AMENDMENTS.md, PLAN.md from seeds/ if missing."""
+    """Seed runtime state (SESSION_STATE, AMENDMENTS, PLAN) from seeds/ if missing."""
     seeded = []
-    for name in ["SESSION_STATE.md", "AMENDMENTS.md", "PLAN.md"]:
+    for name in STATE_FILES:
         p = os.path.join(ROOT, name)
         if not os.path.exists(p):
             sp = os.path.join(ROOT, "seeds", name)
