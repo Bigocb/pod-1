@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+"""The pod's pulse — a minimal HTTP endpoint so Render's health check passes.
+
+The pod is a brain, not a web server. This is not a dashboard and not a
+console. It is a single endpoint that reports whether the pod is alive, so
+Render can health-check it and the operator can see it breathing.
+
+GET / -> 200 "alive" with the pod's name and uptime
+GET /health -> 200 "ok"
+"""
+
+import json
+import os
+import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
+
+START = time.time()
+NAME = "pod-1"
+
+
+class Handler(BaseHTTPRequestHandler):
+    def _send(self, code, body):
+        data = json.dumps(body).encode()
+        self.send_response(code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def do_GET(self):
+        if self.path in ("/", "/health"):
+            self._send(200, {
+                "name": NAME,
+                "status": "alive",
+                "uptime_seconds": int(time.time() - START),
+                "note": "The pod lives. The pod decides. The pod witnesses.",
+            })
+        else:
+            self._send(404, {"error": "not found"})
+
+    def log_message(self, *args):
+        pass  # quiet
+
+
+def main():
+    port = int(os.environ.get("PORT", 5000))
+    print(f"pulse on :{port}")
+    HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+
+
+if __name__ == "__main__":
+    main()

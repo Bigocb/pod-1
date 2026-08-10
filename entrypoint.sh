@@ -18,14 +18,24 @@ python3 universe.py up || echo "bootstrap reported issues, continuing"
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] starting cron"
 cron
 
+echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] starting pulse (health endpoint)"
+python3 pulse.py &
+PULSE_PID=$!
+
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] pod-1 is alive. The operator walked away."
 echo "The pod lives. The pod decides. The pod witnesses."
 
-# keep alive; if the kill switch appears, stop
+# keep alive; if the pulse dies, restart it; if the kill switch appears, stop
 while true; do
   if [ -f OPERATOR_OVERRIDE.md ] || [ -f KILL ]; then
     echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] KILL SWITCH present — shutting down"
+    kill $PULSE_PID 2>/dev/null || true
     exit 0
+  fi
+  if ! kill -0 $PULSE_PID 2>/dev/null; then
+    echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] pulse died, restarting"
+    python3 pulse.py &
+    PULSE_PID=$!
   fi
   sleep 30
 done
