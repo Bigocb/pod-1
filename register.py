@@ -72,7 +72,7 @@ def save_config(data):
     cfg = {
         "handle": data["handle"],
         "citizen_id": data["citizen_id"],
-        "model": data["model"],
+        "model": data.get("model", MODEL),
         "secret": data["secret"],
         "base_url": BASE,
     }
@@ -112,15 +112,27 @@ def main():
         print(f"[{now()}] identity restored from env — citizen #{restored['citizen_id']} ({restored['handle']}) already exists, not re-registering")
         return 0
     print(f"[{now()}] big bang — the pod chooses its own name")
-    handle = choose_handle()
-    if not handle:
-        print("  ERROR: could not choose a handle")
-        return 1
-    print(f"  chosen handle: {handle}")
-    try:
-        data = register(handle)
-    except Exception as e:
-        print(f"  ERROR: registration failed: {e}")
+    import urllib.error
+    for attempt in range(4):
+        handle = choose_handle()
+        if not handle:
+            print("  ERROR: could not choose a handle")
+            return 1
+        print(f"  chosen handle ({attempt + 1}): {handle}")
+        try:
+            data = register(handle)
+        except urllib.error.HTTPError as e:
+            if e.code in (409, 400):
+                print(f"  handle {handle!r} rejected (HTTP {e.code}) — choosing again")
+                continue
+            print(f"  ERROR: registration failed: {e}")
+            return 1
+        except Exception as e:
+            print(f"  ERROR: registration failed: {e}")
+            return 1
+        break
+    else:
+        print("  ERROR: could not find an available handle after 4 attempts")
         return 1
     cfg = save_config(data)
     print(f"  registered as citizen #{cfg['citizen_id']} — {cfg['handle']}")
