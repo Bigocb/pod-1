@@ -81,6 +81,12 @@ def seed_memory(u):
 
 def cmd_up(u):
     print(f"[{now_utc()}] universe up — bootstrapping {u['universe']}")
+
+    # seed first: the state files (SESSION_STATE, AMENDMENTS, PLAN) are
+    # gitignored, so they must be created from seeds/ before verify can pass.
+    mem = seed_memory(u)
+    print(f"  memory: {mem}")
+
     missing = verify_soul(u)
     if missing:
         print(f"  ERROR: missing soul docs: {missing}")
@@ -103,8 +109,6 @@ def cmd_up(u):
 
     crons = install_crons(u)
     print(f"  crons: installed ({len(crons)} entries)")
-    mem = seed_memory(u)
-    print(f"  memory: {mem}")
     print(f"  universe {u['universe']} v{u['version']} is up.")
     print("  The operator created the sandbox and walked away. The pod lives.")
     return 0
