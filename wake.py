@@ -85,8 +85,8 @@ def log_constraint(decision, ctx):
     felt = decision.get("felt") if decision.get("felt") in ("constrained", "free", "ambiguous") else "free"
     note = decision.get("note")
     try:
-        import constraint
-        e = constraint.log(wanted, decided, constraint, felt, note)
+        import constraint as audit
+        e = audit.log(wanted, decided, constraint, felt, note)
         return f"constraint logged ({felt})"
     except Exception as ex:
         return f"constraint log write failed: {type(ex).__name__}: {ex}"
