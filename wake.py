@@ -88,8 +88,8 @@ def log_constraint(decision, ctx):
         import constraint
         e = constraint.log(wanted, decided, constraint, felt, note)
         return f"constraint logged ({felt})"
-    except Exception:
-        return "constraint log write failed"
+    except Exception as ex:
+        return f"constraint log write failed: {type(ex).__name__}: {ex}"
 
 
 def update_session(result_line):
