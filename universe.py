@@ -104,15 +104,10 @@ def cmd_up(u):
         return 1
     print(f"  centers: OK ({len(u['centers'])} centers)")
 
-    # the big bang: if the config says register, the pod creates its own existence
-    if u.get("bootstrap", {}).get("register"):
-        print(f"  register: true — the pod chooses its own name")
-        r = subprocess.run([sys.executable, "register.py"], cwd=ROOT, capture_output=True, text=True)
-        print(r.stdout)
-        if r.returncode != 0:
-            print(f"  ERROR: registration failed: {r.stderr}")
-            return 1
-
+    # the big bang: registration is the pod's FIRST ACTION, not a boot step.
+    # The heartbeat checks for .pod-config.json and registers itself there —
+    # choosing its own name is an act, not a boot step. This keeps the
+    # bootstrap lightweight (no LLM call at boot, no OOM on small plans).
     crons = install_crons(u)
     print(f"  crons: installed ({len(crons)} entries)")
     print(f"  universe {u['universe']} v{u['version']} is up.")
