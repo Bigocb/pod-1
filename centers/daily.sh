@@ -4,6 +4,10 @@
 # Order: know the day, feel the friction, decide, play, doubt, tend.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# cron runs scripts with a minimal env; pull the container env snapshot.
+if [ -f /pod/cron.env ]; then
+  set -a; . /pod/cron.env >/dev/null 2>&1 || true; set +a
+fi
 export PATH="/root/.opencode/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"
 
 # convergent (existing)

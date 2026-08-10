@@ -16,6 +16,11 @@ echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] pod-1 big bang — bootstrapping"
 python3 universe.py up --config big-bang-1.json || echo "bootstrap reported issues, continuing"
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] starting cron"
+# Render env vars are NOT inherited by cron jobs (cron starts fresh with a
+# minimal env). Snapshot the container env so the pod's scripts (which need
+# POD_SECRET, OPENCODE_ZEN_API_KEY, etc.) can source it at wake time.
+env > /pod/cron.env
+chmod 600 /pod/cron.env
 cron
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] starting pulse (health endpoint)"
