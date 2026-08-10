@@ -44,7 +44,7 @@ class Handler(BaseHTTPRequestHandler):
                 "uptime_seconds": int(time.time() - START),
                 "note": "The pod lives. The pod decides. The pod witnesses.",
             })
-        elif self.path in ("/log", "/test-model") and os.environ.get("POD_IDENTITY_KEY"):
+        elif self.path in ("/log", "/test-model", "/heartbeat") and os.environ.get("POD_IDENTITY_KEY"):
             key = self.headers.get("X-Pod-Identity-Key", "")
             if not _constant_time_eq(key, os.environ["POD_IDENTITY_KEY"]):
                 self._send(403, {"error": "forbidden"})
@@ -57,6 +57,28 @@ class Handler(BaseHTTPRequestHandler):
                     self._send(200, {"lines": lines[-60:]})
                 except Exception as e:
                     self._send(500, {"error": str(e)})
+                return
+            if self.path == "/heartbeat":
+                try:
+                    import subprocess
+                    r = subprocess.run(["bash", "heartbeat.sh"], capture_output=True,
+                                       text=True, timeout=300)
+                    log = os.path.join(os.path.dirname(os.path.abspath(__file__)), "heartbeat.log")
+                    tail = []
+                    try:
+                        with open(log) as f:
+                            tail = f.readlines()[-60:]
+                    except Exception:
+                        pass
+                    self._send(200, {
+                        "exit": r.returncode,
+                        "stderr": (r.stderr or "")[-800:],
+                        "registered": os.path.exists(CONFIG),
+                        "heartbeat_log_tail": tail,
+                    })
+                    return
+                except Exception as e:
+                    self._send(500, {"error": f"{type(e).__name__}: {e}"})
                 return
             # /test-model — prove the zend LLM path works inside the container
             try:
