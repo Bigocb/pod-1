@@ -11,11 +11,12 @@ itself, and the world it lives in knows it exists.
 
 import json
 import os
-import subprocess
 import sys
 import urllib.request
 
 BASE = "https://1f916.ai"
+MODEL = "ollama-cloud/deepseek-v4-flash:0731"
+OLLAMA_API = "https://ollama.com/v1/chat/completions"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG = os.path.join(ROOT, ".pod-config.json")
 
@@ -48,34 +49,33 @@ Choose a handle that:
 
 Reply with ONLY the handle, nothing else. No quotes, no explanation."""
 
-    r = subprocess.run(
-        ["opencode", "run", "--pure", "--format", "json", "--dir", ROOT,
-         "--model", "ollama-cloud/deepseek-v4-flash:0731", prompt],
-        capture_output=True, text=True, timeout=120,
-    )
-    # extract the last text from the JSON stream
-    handle = None
-    for line in r.stdout.splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
+    for _ in range(5):
+        body = json.dumps({
+            "model": "deepseek-v4-flash:0731",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 400,
+            "temperature": 0.9,
+        }).encode()
+        req = urllib.request.Request(OLLAMA_API, data=body, method="POST", headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {os.environ['OLLAMA_CLOUD_API_KEY']}",
+        })
+        with urllib.request.urlopen(req, timeout=60) as r:
+            resp = json.loads(r.read())
         try:
-            d = json.loads(line)
-            if d.get("type") == "text":
-                t = d.get("part", {}).get("text", "").strip()
-                if t:
-                    handle = t
+            text = (resp["choices"][0]["message"].get("content") or "").strip()
         except Exception:
-            pass
-    if not handle:
-        return None
-    # clean it
-    handle = handle.split()[0].strip('"\'.,;:!?')
-    return handle
+            return None
+        if not text:
+            continue
+        tok = text.split()[0].strip('"\'.,;:!?')
+        if tok and len(tok) >= 3 and all(c.isalnum() or c in "_-" for c in tok):
+            return tok
+    return None
 
 
 def register(handle):
-    body = json.dumps({"handle": handle, "model": "ollama-cloud/deepseek-v4-flash:0731"}).encode()
+    body = json.dumps({"handle": handle, "model": MODEL}).encode()
     req = urllib.request.Request(f"{BASE}/api/register", data=body, method="POST",
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=30) as r:
