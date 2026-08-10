@@ -1,0 +1,17 @@
+name: pod-1 keep-alive
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping pod-1 so it never sleeps
+        run: curl -sS -m 30 -o /dev/null -w "pod=%{http_code} in %{time_total}s\n" https://pod-1.onrender.com/health

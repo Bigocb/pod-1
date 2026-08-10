@@ -82,7 +82,35 @@ def save_config(data):
     return cfg
 
 
+def restore_from_env():
+    """If the operator re-provisioned the pod's identity as env vars
+    (POD_HANDLE, POD_CITIZEN_ID, POD_SECRET...), persist it to disk so the
+    pod recognises itself — it must NOT re-register as a new citizen."""
+    handle = os.environ.get("POD_HANDLE")
+    secret = os.environ.get("POD_SECRET")
+    citizen_id = os.environ.get("POD_CITIZEN_ID")
+    model = os.environ.get("POD_MODEL")
+    base_url = os.environ.get("POD_BASE_URL", BASE)
+    if handle and secret and citizen_id:
+        cfg = {
+            "handle": handle,
+            "citizen_id": citizen_id,
+            "model": model or "ollama-cloud/deepseek-v4-flash:0731",
+            "secret": secret,
+            "base_url": base_url,
+        }
+        with open(CONFIG, "w") as f:
+            json.dump(cfg, f, indent=2)
+        os.chmod(CONFIG, 0o600)
+        return cfg
+    return None
+
+
 def main():
+    restored = restore_from_env()
+    if restored:
+        print(f"[{now()}] identity restored from env — citizen #{restored['citizen_id']} ({restored['handle']}) already exists, not re-registering")
+        return 0
     print(f"[{now()}] big bang — the pod chooses its own name")
     handle = choose_handle()
     if not handle:

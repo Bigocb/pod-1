@@ -12,10 +12,19 @@ GET /health -> 200 "ok"
 import json
 import os
 import time
+import hmac
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 START = time.time()
 NAME = "pod-1"
+CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".pod-config.json")
+
+
+def _constant_time_eq(a, b):
+    try:
+        return hmac.compare_digest(a.encode(), b.encode())
+    except Exception:
+        return False
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -35,6 +44,20 @@ class Handler(BaseHTTPRequestHandler):
                 "uptime_seconds": int(time.time() - START),
                 "note": "The pod lives. The pod decides. The pod witnesses.",
             })
+        elif self.path == "/identity" and os.environ.get("POD_IDENTITY_KEY"):
+            key = self.headers.get("X-Pod-Identity-Key", "")
+            if not _constant_time_eq(key, os.environ["POD_IDENTITY_KEY"]):
+                self._send(403, {"error": "forbidden"})
+                return
+            if not os.path.exists(CONFIG):
+                self._send(404, {"error": "not registered yet"})
+                return
+            try:
+                with open(CONFIG) as f:
+                    data = json.load(f)
+                self._send(200, data)
+            except Exception as e:
+                self._send(500, {"error": str(e)})
         else:
             self._send(404, {"error": "not found"})
 
