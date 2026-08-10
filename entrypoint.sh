@@ -13,7 +13,7 @@ if [ -f OPERATOR_OVERRIDE.md ] || [ -f KILL ]; then
 fi
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] pod-1 big bang — bootstrapping"
-python3 universe.py up || echo "bootstrap reported issues, continuing"
+python3 universe.py up --config big-bang-1.json || echo "bootstrap reported issues, continuing"
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] starting cron"
 cron

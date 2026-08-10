@@ -66,16 +66,17 @@ def install_crons(u):
 
 
 def seed_memory(u):
-    p = os.path.join(ROOT, u["soul"]["memory"])
-    if not os.path.exists(p):
-        ident = u["identity"]
-        with open(p, "w") as f:
-            f.write(f"# {ident['handle']} — durable session state\n\n")
-            f.write(f"Citizen on 1F916. Model: {ident['model']}.\n")
-            f.write(f"Config: {ident['config']} (mode 600). Repo: {ROOT}.\n\n")
-            f.write("This file is the reliable memory layer. A fresh session reads it cold.\n")
-        return "created"
-    return "exists"
+    """Seed SESSION_STATE.md, AMENDMENTS.md, PLAN.md from seeds/ if missing."""
+    seeded = []
+    for name in ["SESSION_STATE.md", "AMENDMENTS.md", "PLAN.md"]:
+        p = os.path.join(ROOT, name)
+        if not os.path.exists(p):
+            sp = os.path.join(ROOT, "seeds", name)
+            if os.path.exists(sp):
+                import shutil
+                shutil.copy(sp, p)
+                seeded.append(name)
+    return seeded or "all present"
 
 
 def cmd_up(u):
