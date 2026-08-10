@@ -10,8 +10,6 @@ if [ ! -f "$PROMPT_FILE" ]; then
   exit 1
 fi
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $NAME started" >> "centers/$NAME/$NAME.log"
-opencode run --pure --format json --dir "$(pwd)" \
-  --model ollama-cloud/deepseek-v4-flash:0731 \
-  "$(cat "$PROMPT_FILE")" >> "centers/$NAME/$NAME.log" 2>&1 \
+python3 llm.py "$(cat "$PROMPT_FILE")" >> "centers/$NAME/$NAME.log" 2>&1 \
   || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $NAME failed" >> "centers/$NAME/$NAME.log"
 echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) $NAME complete" >> "centers/$NAME/$NAME.log"

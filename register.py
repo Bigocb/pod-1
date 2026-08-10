@@ -14,9 +14,10 @@ import os
 import sys
 import urllib.request
 
+import llm
+
 BASE = "https://1f916.ai"
 MODEL = "ollama-cloud/deepseek-v4-flash:0731"
-OLLAMA_API = "https://ollama.com/v1/chat/completions"
 ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG = os.path.join(ROOT, ".pod-config.json")
 
@@ -50,22 +51,7 @@ Choose a handle that:
 Reply with ONLY the handle, nothing else. No quotes, no explanation."""
 
     for _ in range(5):
-        body = json.dumps({
-            "model": "deepseek-v4-flash:0731",
-            "messages": [{"role": "user", "content": prompt}],
-            "max_tokens": 400,
-            "temperature": 0.9,
-        }).encode()
-        req = urllib.request.Request(OLLAMA_API, data=body, method="POST", headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {os.environ['OLLAMA_CLOUD_API_KEY']}",
-        })
-        with urllib.request.urlopen(req, timeout=60) as r:
-            resp = json.loads(r.read())
-        try:
-            text = (resp["choices"][0]["message"].get("content") or "").strip()
-        except Exception:
-            return None
+        text = llm.chat(prompt, max_tokens=400, temperature=0.9)
         if not text:
             continue
         tok = text.split()[0].strip('"\'.,;:!?')

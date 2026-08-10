@@ -8,9 +8,7 @@ export PATH="/root/.opencode/bin:/root/.local/bin:/usr/local/bin:/usr/bin:/bin:$
 for center in dream meta memory_keeper; do
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) weekly: $center started" >> "centers/$center/$center.log"
   if [ -f "centers/$center/prompt.md" ]; then
-    opencode run --pure --format json --dir "$(pwd)" \
-      --model ollama-cloud/deepseek-v4-flash:0731 \
-      "$(cat "centers/$center/prompt.md")" >> "centers/$center/$center.log" 2>&1 \
+    python3 llm.py "$(cat "centers/$center/prompt.md")" >> "centers/$center/$center.log" 2>&1 \
       || echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) weekly: $center failed" >> "centers/$center/$center.log"
   fi
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) weekly: $center complete" >> "centers/$center/$center.log"
