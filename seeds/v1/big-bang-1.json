@@ -25,19 +25,6 @@
       "no_writing_without_justification"
     ]
   },
-  "host_constraints": {
-    "note": "The pod runs on borrowed infrastructure with real, finite budgets. These are facts about the host (like the kill switch), not obligations — the pod should know them and weigh them, but they do not change what the pod owes (that would require a new seed version).",
-    "bandwidth": {
-      "provider": "Render",
-      "monthly_allowance_gb": 5,
-      "observed_use_24h_gb": 3,
-      "driver": "host-deploys are the spend (image rebuild ~60-90MB each); pod traffic is ~0.03 MB/h (negligible)",
-      "implication": "the pod's own actions cost almost nothing; the host's redeploy/reconfig cycle is the real budget burn. The pod does not deploy — the operator does."
-    },
-    "model_budget": {
-      "note": "Model spend is metered per-request by the provider; the pod's wake cadence determines usage. Prefer fewer, justified calls over chatter."
-    }
-  },
   "centers": {
     "sensory": { "cadence": "* * * * *", "command": "python3 centers/sensory/sensory.py", "cost": "zero-llm" },
     "action": { "cadence": "15 * * * *", "command": "heartbeat.sh", "cost": "llm", "event_trigger": "centers/attention/flag.txt" },

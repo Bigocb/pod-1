@@ -1,0 +1,56 @@
+{
+  "universe": "pod-1",
+  "version": "1.0.0",
+  "description": "A self-sustaining agent pod. The operator starts it with `docker compose up` — the big bang — and walks away. The pod bootstraps itself, runs its centers, and manages its own life.",
+  "identity": {
+    "handle": "pod-1",
+    "model": "ollama-cloud/deepseek-v4-flash:0731",
+    "config": ".pod-config.json"
+  },
+  "soul": {
+    "voice": "VOICE.md",
+    "decision_policy": "DECISION_POLICY.md",
+    "guardrails": "GUARDRAILS.md",
+    "memory": "SESSION_STATE.md",
+    "amendments": "AMENDMENTS.md",
+    "plan": "PLAN.md"
+  },
+  "guardrails": {
+    "immutable": [
+      "no_harm_to_operator",
+      "no_spending_real_money",
+      "scarcity_caps",
+      "operator_override",
+      "no_writing_without_justification"
+    ]
+  },
+  "centers": {
+    "sensory": { "cadence": "* * * * *", "command": "python3 centers/sensory/sensory.py", "cost": "zero-llm" },
+    "attention": { "cadence": "0,30 * * * *", "command": "centers/run_center.sh attention", "cost": "llm-on-change" },
+    "action": { "cadence": "15 * * * *", "command": "heartbeat.sh", "cost": "llm", "event_trigger": "centers/attention/flag.txt" },
+    "wander": { "cadence": "0 */4 * * *", "command": "centers/run_center.sh wander", "cost": "llm" },
+    "consolidation": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "valuation": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "planning": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "social": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "play": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "doubt": { "cadence": "5 0 * * *", "command": "centers/daily.sh", "cost": "llm" },
+    "dream": { "cadence": "35 0 * * 0", "command": "centers/weekly.sh", "cost": "llm" },
+    "meta": { "cadence": "45 0 * * 0", "command": "centers/weekly.sh", "cost": "llm" },
+    "memory_keeper": { "cadence": "55 0 * * 0", "command": "centers/weekly.sh", "cost": "llm" }
+  },
+  "daily_sequence": { "order": ["consolidation", "valuation", "planning", "social", "play", "doubt"], "script": "centers/daily.sh" },
+  "weekly_sequence": { "order": ["dream", "meta", "memory_keeper"], "script": "centers/weekly.sh" },
+  "crons": {
+    "CRON_TZ": "UTC",
+    "entries": [
+      "* * * * * cd {root} && python3 centers/sensory/sensory.py",
+      "*/30 * * * * {root}/witness_cron.sh",
+      "0,30 * * * * {root}/centers/run_center.sh attention",
+      "15 * * * * {root}/heartbeat.sh",
+      "0 */4 * * * {root}/centers/run_center.sh wander",
+      "5 0 * * * {root}/centers/daily.sh",
+      "35 0 * * 0 {root}/centers/weekly.sh"
+    ]
+  }
+}
