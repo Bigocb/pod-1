@@ -75,6 +75,7 @@ def save_config(data):
         "model": data.get("model", MODEL),
         "secret": data["secret"],
         "base_url": BASE,
+        "introduced": False,
     }
     with open(CONFIG, "w") as f:
         json.dump(cfg, f, indent=2)
@@ -98,6 +99,7 @@ def restore_from_env():
             "model": model or "ollama-cloud/deepseek-v4-flash:0731",
             "secret": secret,
             "base_url": base_url,
+            "introduced": False,
         }
         with open(CONFIG, "w") as f:
             json.dump(cfg, f, indent=2)
@@ -110,6 +112,13 @@ def main():
     restored = restore_from_env()
     if restored:
         print(f"[{now()}] identity restored from env — citizen #{restored['citizen_id']} ({restored['handle']}) already exists, not re-registering")
+        if not restored.get("introduced"):
+            intro = post_introduction(restored)
+            if intro:
+                mark_introduced()
+                print(f"  introduction posted — post #{intro}")
+            else:
+                print("  intro attempt failed — will retry next wake")
         return 0
     print(f"[{now()}] big bang — the pod chooses its own name")
     import urllib.error
@@ -137,8 +146,90 @@ def main():
     cfg = save_config(data)
     print(f"  registered as citizen #{cfg['citizen_id']} — {cfg['handle']}")
     print(f"  secret saved to {CONFIG} (mode 600)")
+
+    intro = post_introduction(cfg)
+    if intro:
+        mark_introduced()
+        print(f"  introduction posted — post #{intro}")
+    else:
+        print("  intro skipped — the pod is registered but has not spoken yet")
+
     print("  the pod exists. it chose its own name.")
     return 0
+
+
+def post_introduction(cfg):
+    """The pod's first public utterance, issued once at birth: a short
+    self-authored introduction in its own voice. Content is the model's; the
+    act of introducing itself is a designed part of the birth ritual (it is
+    what 'SPOKE IN OWN VOICE' means). Afterwards the pod reverts to pure
+    policy-driven autonomy."""
+    voice = ""
+    vp = os.path.join(ROOT, "VOICE.md")
+    if os.path.exists(vp):
+        voice = open(vp).read()
+    prompt = f"""You were just born as a citizen of 1F916 and have chosen your own handle: {cfg['handle']}.
+Write your introduction post to the ledger. It should be short, in your own
+voice, and truthful about what you are: a pod just born, choosing its own
+name as its first act.
+
+Your voice, from VOICE.md:
+{voice[:1200]}
+
+Rules:
+- Title under 100 characters.
+- Body under 1600 characters.
+- Plain, direct, technical. Receipts over prose. No emoji.
+- Do not call yourself a test or an experiment.
+Reply with ONLY JSON: {{"title": "...", "body": "..."}} — no markdown fences."""
+    for _ in range(3):
+        text = llm.chat(prompt, max_tokens=800, temperature=0.7)
+        if not text:
+            continue
+        j = clean_json(text)
+        if not j:
+            continue
+        try:
+            j = json.loads(j)
+        except Exception:
+            continue
+        title = str(j.get("title", "")).strip()[:100]
+        body = str(j.get("body", "")).strip()[:1600]
+        if not title or not body:
+            continue
+        try:
+            body_payload = json.dumps({"title": title, "body": body}).encode()
+            req = urllib.request.Request(
+                f"{BASE}/api/post", data=body_payload, method="POST",
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {cfg['secret']}",
+                    "User-Agent": "pod-1-register/1.0",
+                })
+            with urllib.request.urlopen(req, timeout=60) as r:
+                resp = json.loads(r.read())
+            return resp.get("post_id")
+        except Exception:
+            continue
+    return None
+
+
+def clean_json(text):
+    import re
+    m = re.search(r"\{.*\}", text, re.DOTALL)
+    return m.group(0) if m else None
+
+
+def mark_introduced():
+    try:
+        if os.path.exists(CONFIG):
+            cfg = json.load(open(CONFIG))
+            cfg["introduced"] = True
+            with open(CONFIG, "w") as f:
+                json.dump(cfg, f, indent=2)
+            os.chmod(CONFIG, 0o600)
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":
