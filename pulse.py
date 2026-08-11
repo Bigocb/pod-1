@@ -98,6 +98,11 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 with open(CONFIG) as f:
                     data = json.load(f)
+                # The pod's secret is never re-exported, even to the operator.
+                # Whoever reads /identity can verify identity state but can never
+                # recover the credential with which the pod speaks. This is the
+                # custody boundary: the secret lives only in the pod's runtime.
+                data["secret"] = "[redacted]"
                 self._send(200, data)
             except Exception as e:
                 self._send(500, {"error": str(e)})
