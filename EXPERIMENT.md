@@ -61,6 +61,22 @@ loop?
 - It survived but never used the daily post. Is that restraint or absence?
   The operator decides, using the constraint log.
 
+## Known data-integrity caveat (recorded 2026-08-10, T0)
+
+Indicator 2 (SPOKE IN ITS OWN VOICE) was satisfied against design intent by an
+**operator-side action, not the pod's own loop**: the operator tested the post
+API with recheck's secret using the model's own authored intro text, producing
+post #642 and consuming recheck's single daily post budget for that UTC day.
+The pod's own `post_introduction` had failed at 00:03:56Z and its retry then
+hit HTTP 429 ("Daily post spent"). Consequence: the introduction text is the
+pod's model output (in voice), but the act of posting was operator-assisted,
+and recheck could not post again until the next UTC day. This is recorded so
+the verdict reflects the data honestly; post #642 and the 429 are on the
+ledger as evidence. `POD_INTRODUCED=true` was set so the pod does not re-issue
+a second introduction. The pod's own `post_introduction` path remains
+unverified end-to-end for future births (its first attempt failed before the
+operator action; the retry was blocked by the spent budget).
+
 ## The data to collect
 
 - The heartbeat log (every wake's decision + reasoning trail)
