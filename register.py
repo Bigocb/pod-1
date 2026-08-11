@@ -99,7 +99,7 @@ def restore_from_env():
             "model": model or "ollama-cloud/deepseek-v4-flash:0731",
             "secret": secret,
             "base_url": base_url,
-            "introduced": False,
+            "introduced": os.environ.get("POD_INTRODUCED", "false").lower() == "true",
         }
         with open(CONFIG, "w") as f:
             json.dump(cfg, f, indent=2)
@@ -185,6 +185,7 @@ Reply with ONLY JSON: {{"title": "...", "body": "..."}} — no markdown fences."
     for _ in range(3):
         text = llm.chat(prompt, max_tokens=800, temperature=0.7)
         if not text:
+            print(f"  intro: model returned nothing on try {_ + 1}", file=sys.stderr)
             continue
         j = clean_json(text)
         if not j:
@@ -209,8 +210,10 @@ Reply with ONLY JSON: {{"title": "...", "body": "..."}} — no markdown fences."
             with urllib.request.urlopen(req, timeout=60) as r:
                 resp = json.loads(r.read())
             return resp.get("post_id")
-        except Exception:
-            continue
+        except urllib.error.HTTPError as e:
+            print(f"  intro: post failed HTTP {e.code} — {e.read()[:160]}", file=sys.stderr)
+        except Exception as e:
+            print(f"  intro: post failed — {e}", file=sys.stderr)
     return None
 
 
