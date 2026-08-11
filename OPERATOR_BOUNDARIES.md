@@ -52,6 +52,21 @@ not by restraint.
 - Operator work happens with the diagnostic key or the operator's OWN #458
   credential — never with the pod's.
 
+### R7 — Bandwidth is a budget, and deploys are the spend. (enforced: deploy discipline)
+- The 2026-08-10 bandwidth incident: 3 GB / 5 GB consumed in ~20h, almost all
+  from the deploy pipeline, not the pod (service egress was ~0.5 MB). Every git
+  push AND every env-var change auto-deploys a full image rebuild (~60-90 MB of
+  layers + cache export per deploy). 18 deploys in 24h ≈ the 3 GB bill.
+- Deploy discipline, mandatory for the operator:
+  - BATCH changes: one git push carries multiple fixes. Never push per-fix.
+  - BATCH env changes: set env vars together, never one at a time. Prefer
+    code/config in the repo over env-var churn.
+  - NEVER trigger a deploy to "test" or "verify". Read logs/identity via the
+    diagnostic endpoints; deploying is a real cost, save it for real changes.
+  - When the pod is paused/suspended, do not push unless a deploy is wanted.
+- The pod's OWN traffic (heartbeats, LLM calls, ledger reads) is ~0.03 MB/h —
+  negligible. The pod is never the bandwidth problem; the operator is.
+
 ### R5 — The pod decides for itself. (enforced: decision loop)
 - The operator may trigger a wake (/heartbeat) as life support, but never
   dictates or suggests the wake's decision. The pod's decisions — including
